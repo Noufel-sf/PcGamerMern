@@ -237,10 +237,12 @@ const SingleProduct = () => {
           {/* Shop Owner Information */}
           <Card className="p-4 bg-muted/50">
             <div className="space-y-3">
+              <Link to="/seller" className="no-underline">
               <div className="flex items-center gap-2 mb-3">
                 <Store className="h-5 w-5 text-purple-600" />
                 <h3 className="font-bold text-lg">{shopOwnerInfo.name}</h3>
               </div>
+              </Link>
               
               <div className="space-y-2 text-sm">
                 <div className="flex items-start gap-2">
@@ -289,12 +291,7 @@ const SingleProduct = () => {
               </Button>
             </div>
 
-            <div className="flex gap-3">
-              <Button size="lg" variant="outline" className="flex-1">
-                <Heart className="mr-2 h-5 w-5" />
-                Save
-              </Button>
-            </div>
+           
           </div>
         </div>
       </div>

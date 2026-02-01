@@ -1,4 +1,4 @@
-import * as React from "react";
+import { useState, useEffect } from "react";
 import {
   getCoreRowModel,
   getPaginationRowModel,
@@ -7,7 +7,6 @@ import {
   useReactTable,
   flexRender,
 } from "@tanstack/react-table";
-
 import {
   Table,
   TableBody,
@@ -20,61 +19,40 @@ import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/animate-ui/base/checkbox";
-import { MoreHorizontal, ArrowUpDown, ChevronDown } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import AdminSidebarLayout from "@/components/AdminSidebarLayout";
 import { useAuth } from "@/context/AuthContext";
-import axiosInstance from "@/lib/Api";
+import Api from "@/lib/Api";
 import toast from "react-hot-toast";
-import { ButtonLoading } from "@/components/ui/ButtonLoading";
-import {
-  Sheet,
-  SheetClose,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
 import AdminDataTableSkeleton from "@/components/AdminDataTableSkeleton";
+import { createProductColumns } from "@/components/ProductRow";
+import UpdateProductUi from "@/components/UpdateProductUi";
+import CreateProductUi from "@/components/CreateProductUi";
 
 export default function AdminProducts() {
-  const [data, setData] = React.useState([]);
-  const [loading, setLoading] = React.useState(false);
-  const [editMode, setEditMode] = React.useState(false);
-  const [editSheetOpen, setEditSheetOpen] = React.useState(false);
-  const [name, setName] = React.useState("");
-  const [price, setPrice] = React.useState("");
-  const [image, setImage] = React.useState(null);
-  const [categoryId, setCategoryId] = React.useState("");
-  const [bestSelling, setBestSelling] = React.useState(false);
-  const [categories, setCategories] = React.useState([]);
-  const [selectedProduct, setSelectedProduct] = React.useState(null);
-  const [open, setOpen] = React.useState(false);
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [editSheetOpen, setEditSheetOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [price, setPrice] = useState("");
+  const [description, setDescription] = useState("");
+  const [images, setImages] = useState([null, null, null, null]);
+  const [imagePreviews, setImagePreviews] = useState([null, null, null, null]);
+  const [categoryId, setCategoryId] = useState("");
+  const [bestSelling, setBestSelling] = useState(false);
+  const [sizes, setSizes] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [open, setOpen] = useState(false);
 
   const handleStatusChange = async (productId, newStatus) => {
     try {
-      const res = await axiosInstance.patch(`/product/${productId}`, {
+      const res = await Api.patch(`/product/${productId}`, {
         active: newStatus === "active",
       });
       toast.success("Status updated successfully");
@@ -87,7 +65,7 @@ export default function AdminProducts() {
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const { data } = await axiosInstance.get("/product");
+      const { data } = await Api.get("/product");
       setData(data?.products);
     } catch (error) {
       console.log(error);
@@ -98,7 +76,7 @@ export default function AdminProducts() {
 
   const fetchCategories = async () => {
     try {
-      const res = await axiosInstance.get("/category");
+      const res = await Api.get("/category");
       setCategories(res.data.categories);
     } catch (err) {
       toast.error("Failed to fetch categories");
@@ -112,20 +90,23 @@ export default function AdminProducts() {
       const formData = new FormData();
       formData.append("name", name);
       formData.append("price", price);
+      formData.append("description", description);
       formData.append("categoryId", categoryId);
       formData.append("bestSelling", bestSelling ? "true" : "false");
-      if (image) {
-        formData.append("image", image);
-      }
+      formData.append("sizes", JSON.stringify(sizes));
+      
+      // Append all images
+      images.forEach((image, index) => {
+        if (image) {
+          formData.append(`image${index + 1}`, image);
+        }
+      });
 
       let res;
       if (editMode && selectedProduct) {
-        res = await axiosInstance.patch(
-          `/product/${selectedProduct.id}`,
-          formData,
-        );
+        res = await Api.patch(`/product/${selectedProduct.id}`, formData);
       } else {
-        res = await axiosInstance.post("/product", formData);
+        res = await Api.post("/product", formData);
       }
 
       toast.success(res.data.message);
@@ -136,9 +117,12 @@ export default function AdminProducts() {
       setSelectedProduct(null);
       setName("");
       setPrice("");
-      setImage(null);
+      setDescription("");
+      setImages([null, null, null, null]);
+      setImagePreviews([null, null, null, null]);
       setCategoryId("");
       setBestSelling(false);
+      setSizes([]);
     } catch (error) {
       toast.error(error.response?.data?.message || "Something went wrong");
     } finally {
@@ -149,7 +133,7 @@ export default function AdminProducts() {
   const handleDelete = async (productId) => {
     setLoading(true);
     try {
-      const res = await axiosInstance.delete(`/product/${productId}`);
+      const res = await Api.delete(`/product/${productId}`);
       toast.success(res.data.message);
       await fetchProducts();
     } catch (error) {
@@ -159,187 +143,32 @@ export default function AdminProducts() {
     }
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     fetchProducts();
     fetchCategories();
   }, []);
 
   const { user } = useAuth();
-  const [sorting, setSorting] = React.useState([]);
-  const [columnFilters, setColumnFilters] = React.useState([]);
-  const [columnVisibility, setColumnVisibility] = React.useState({});
-  const [rowSelection, setRowSelection] = React.useState({});
+  const [sorting, setSorting] = useState([]);
+  const [columnFilters, setColumnFilters] = useState([]);
+  const [columnVisibility, setColumnVisibility] = useState({});
+  const [rowSelection, setRowSelection] = useState({});
 
-  const columns = [
-    {
-      id: "select",
-      header: ({ table }) => (
-        <Checkbox
-          checked={
-            table.getIsAllPageRowsSelected() ||
-            (table.getIsSomePageRowsSelected() && "indeterminate")
-          }
-          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-          aria-label="Select all"
-        />
-      ),
-      cell: ({ row }) => (
-        <Checkbox
-          checked={row.getIsSelected()}
-          onCheckedChange={(value) => row.toggleSelected(!!value)}
-          aria-label="Select row"
-        />
-      ),
-      enableSorting: false,
-      enableHiding: false,
-    },
-    {
-      accessorKey: "id",
-      header: "ID",
-      cell: ({ row }) => (
-        <div className="font-medium">{row.getValue("id")}</div>
-      ),
-    },
-    {
-      accessorKey: "image",
-      header: "Image",
-      cell: ({ row }) => (
-        <img
-          className="w-12 h-12 object-cover rounded"
-          src={row.getValue("image")}
-          alt="Product Image"
-        />
-      ),
-    },
-    {
-      accessorKey: "name",
-      header: "Name",
-      cell: ({ row }) => (
-        <div className="font-medium">{row.getValue("name")}</div>
-      ),
-      filterFn: (row, columnId, filterValue) => {
-        return row
-          .getValue(columnId)
-          ?.toLowerCase()
-          .includes(filterValue.toLowerCase());
-      },
-    },
-    {
-      accessorKey: "category",
-      header: "Category",
-      cell: ({ row }) => {
-        const categoryTitle = row.original.category?.title || "Unknown";
-        return <div className="text-sm font-medium">{categoryTitle}</div>;
-      },
-    },
-    {
-      accessorKey: "price",
-      header: "Price",
-      cell: ({ row }) => (
-        <div className="text-sm text-muted-foreground">
-          {row.getValue("price")}
-        </div>
-      ),
-    },
-
-    {
-      accessorKey: "Active",
-      header: "Status",
-      cell: ({ row }) => {
-        const product = row.original;
-        const isActive = product.active !== false; 
-        const status = isActive ? "active" : "pending";
-
-        return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 px-2">
-                <Badge
-                  className={`cursor-pointer ${
-                    status === "active"
-                      ? "bg-green-500/10 text-green-600 hover:bg-green-500/20 dark:bg-green-500/20 dark:text-green-400"
-                      : "bg-yellow-500/10 text-yellow-600 hover:bg-yellow-500/20 dark:bg-yellow-500/20 dark:text-yellow-400"
-                  }`}
-                >
-                  {status === "active" ? "Active" : "Pending"}
-                </Badge>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Change Status</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={() => handleStatusChange(product.id, "active")}
-              >
-                <Badge className="bg-green-500/10 text-green-600 dark:bg-green-500/20 dark:text-green-400">
-                  Active
-                </Badge>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => handleStatusChange(product.id, "pending")}
-              >
-                <Badge className="bg-yellow-500/10 text-yellow-600 dark:bg-yellow-500/20 dark:text-yellow-400">
-                  Pending
-                </Badge>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        );
-      },
-    },
-    {
-      accessorKey: "bestSelling",
-      header: "Best Selling",
-      cell: ({ row }) => {
-        const isBestSelling = row.getValue("bestSelling");
-        return (
-          <div className="text-sm text-muted-foreground">
-            {isBestSelling ? "Yes" : "No"}
-          </div>
-        );
-      },
-    },
-
-    {
-      id: "actions",
-      enableHiding: false,
-      cell: ({ row }) => {
-        const product = row.original;
-
-        return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0">
-                <span className="sr-only">Open menu</span>
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                className="cursor-pointer"
-                onClick={() => {
-                  setSelectedProduct(product);
-                  setEditMode(true);
-                  setEditSheetOpen(true);
-                  setName(product.name);
-                  setPrice(product.price);
-                  setCategoryId(product.categoryId);
-                  setBestSelling(product.bestSelling);
-                }}
-              >
-                Edit
-              </DropdownMenuItem>
-              <DropdownMenuItem className="text-red-600 cursor-pointer" onClick={() => handleDelete(product.id)}>
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        );
-      },
-    },
-  ];
+  const columns = createProductColumns({
+    handleStatusChange,
+    handleDelete,
+    setSelectedProduct,
+    setEditMode,
+    setEditSheetOpen,
+    setName,
+    setPrice,
+    setDescription,
+    setCategoryId,
+    setBestSelling,
+    setSizes,
+    setImages,
+    setImagePreviews,
+  });
 
   const table = useReactTable({
     data,
@@ -376,91 +205,35 @@ export default function AdminProducts() {
             }
             className="max-w-sm"
           />
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button variant="outline">Create a new product</Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-              <form onSubmit={handleSubmit}>
-                <DialogHeader>
-                  <DialogTitle>
-                    {editMode ? "Edit Product" : "Create Product"}
-                  </DialogTitle>
-                  <DialogDescription className="mb-3">
-                    {editMode
-                      ? "Edit product. Click save when you are done."
-                      : "Create a new product. Click save when you are done."}
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-4">
-                  <div className="grid gap-3">
-                    <Label htmlFor="name">Name</Label>
-                    <Input
-                      id="name"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                    />
-                  </div>
-                  <div className="grid gap-3">
-                    <Label htmlFor="price">Price</Label>
-                    <Input
-                      id="price"
-                      type="number"
-                      value={price}
-                      onChange={(e) => setPrice(e.target.value)}
-                    />
-                  </div>
-                  <div className="grid gap-3">
-                    <Label htmlFor="image">Image</Label>
-                    <Input
-                      id="image"
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => setImage(e.target.files[0])}
-                    />
-                  </div>
-                  <div className="grid gap-3">
-                    <Label htmlFor="category">Category</Label>
-                    <select
-                      id="category"
-                      value={categoryId}
-                      onChange={(e) => setCategoryId(e.target.value)}
-                      className="border px-4 py-2 rounded"
-                    >
-                      <option value="">Select category</option>
-                      {categories.map((cat) => (
-                        <option key={cat.id} value={cat.id}>
-                          {cat.title}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Checkbox
-                      id="bestSelling"
-                      checked={bestSelling}
-                      onCheckedChange={() => setBestSelling((prev) => !prev)}
-                    />
-                    <Label htmlFor="bestSelling">Best Selling</Label>
-                  </div>
-                </div>
 
-                <DialogFooter className="mt-5">
-                  <DialogClose asChild>
-                    <Button variant="outline">Cancel</Button>
-                  </DialogClose>
-                  {loading ? (
-                    <ButtonLoading />
-                  ) : (
-                    <Button type="submit">Save changes</Button>
-                  )}
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
+          <CreateProductUi
+            open={open}
+            setOpen={setOpen}
+            handleSubmit={handleSubmit}
+            editMode={editMode}
+            name={name}
+            setName={setName}
+            description={description}
+            setDescription={setDescription}
+            price={price}
+            setPrice={setPrice}
+            images={images}
+            setImages={setImages}
+            imagePreviews={imagePreviews}
+            setImagePreviews={setImagePreviews}
+            categoryId={categoryId}
+            setCategoryId={setCategoryId}
+            categories={categories}
+            bestSelling={bestSelling}
+            setBestSelling={setBestSelling}
+            sizes={sizes}
+            setSizes={setSizes}
+            loading={loading}
+          />
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="ml-auto">
+              <Button variant="outline" size="sm" className="ml-auto">
                 Columns <ChevronDown className="ml-2 h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -484,94 +257,31 @@ export default function AdminProducts() {
           </DropdownMenu>
         </div>
 
-        <Sheet open={editSheetOpen} onOpenChange={setEditSheetOpen}>
-          <SheetContent>
-            <form onSubmit={handleSubmit}>
-              <SheetHeader>
-                <SheetTitle>Edit Product</SheetTitle>
-                <SheetDescription>
-                  Make changes to the product below.
-                </SheetDescription>
-              </SheetHeader>
-
-              <div className="grid gap-4 py-4 px-3">
-                <div className="grid gap-3">
-                  <Label htmlFor="name">Name</Label>
-                  <Input
-                    id="name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                  />
-                </div>
-                <div className="grid gap-3">
-                  <Label htmlFor="price">Price</Label>
-                  <Input
-                    id="price"
-                    type="number"
-                    value={price}
-                    onChange={(e) => setPrice(e.target.value)}
-                  />
-                </div>
-                <div className="grid gap-3">
-                  <Label htmlFor="image">Image</Label>
-                  <Input
-                    id="image"
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => setImage(e.target.files[0])}
-                  />
-                  {editMode && selectedProduct?.image && (
-                    <div className="mt-2">
-                      <p className="text-sm text-muted-foreground mb-1">
-                        Current Image:
-                      </p>
-                      <img
-                        src={selectedProduct.image}
-                        alt="Current Product"
-                        className="w-40 h-40 object-cover rounded border my-3"
-                      />
-                    </div>
-                  )}
-                </div>
-                <div className="grid gap-3">
-                  <Label htmlFor="category">Category</Label>
-                  <select
-                    id="category"
-                    value={categoryId}
-                    onChange={(e) => setCategoryId(e.target.value)}
-                    className="border px-4 py-2 rounded"
-                  >
-                    <option value="">Select category</option>
-                    {categories.map((cat) => (
-                      <option key={cat.id} value={cat.id}>
-                        {cat.title}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="flex items-center gap-2 mt-2">
-                  <Checkbox
-                    id="bestSelling"
-                    checked={bestSelling}
-                    onCheckedChange={() => setBestSelling((prev) => !prev)}
-                  />
-                  <Label htmlFor="bestSelling">Best Selling</Label>
-                </div>
-              </div>
-
-              <SheetFooter className="space-y-2">
-                <SheetClose asChild>
-                  <Button variant="outline">Cancel</Button>
-                </SheetClose>
-                {loading ? (
-                  <ButtonLoading />
-                ) : (
-                  <Button type="submit">Save changes</Button>
-                )}
-              </SheetFooter>
-            </form>
-          </SheetContent>
-        </Sheet>
+        <UpdateProductUi
+          editSheetOpen={editSheetOpen}
+          setEditSheetOpen={setEditSheetOpen}
+          handleSubmit={handleSubmit}
+          name={name}
+          setName={setName}
+          price={price}
+          setPrice={setPrice}
+          images={images}
+          setImages={setImages}
+          imagePreviews={imagePreviews}
+          setImagePreviews={setImagePreviews}
+          selectedProduct={selectedProduct}
+          description={description}
+          setDescription={setDescription}
+          editMode={editMode}
+          categoryId={categoryId}
+          setCategoryId={setCategoryId}
+          categories={categories}
+          bestSelling={bestSelling}
+          setBestSelling={setBestSelling}
+          sizes={sizes}
+          setSizes={setSizes}
+          loading={loading}
+        />
 
         <div className="rounded-md border">
           <Table>
@@ -623,6 +333,7 @@ export default function AdminProducts() {
             </TableBody>
           </Table>
         </div>
+
         <div className="flex items-center justify-end space-x-2 py-4">
           <div className="text-muted-foreground flex-1 text-sm">
             {table.getFilteredSelectedRowModel().rows.length} of{" "}

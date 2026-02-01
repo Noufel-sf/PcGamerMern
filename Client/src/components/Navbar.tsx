@@ -1,4 +1,3 @@
-import logo from "@/assets/dragon-logo.png";
 import { IoIosSearch } from "react-icons/io";
 import { FiShoppingCart } from "react-icons/fi";
 import { FaRegHeart, FaUser } from "react-icons/fa";
@@ -22,7 +21,6 @@ import {
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
 import { useEffect, useState } from "react";
-import MagicButton from "./ui/MagicButton";
 import { useAuth } from "@/context/AuthContext";
 import Api from "@/lib/Api";
 import { useCart } from "@/context/CartContext";

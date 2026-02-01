@@ -4,16 +4,17 @@ import FooterUi from '../components/FooterUi';
 import TopBar from '@/components/TopBar';
 
 
-export default function LayoutWrapper({ children }) {
+export default function LayoutWrapper({ children }: { children: React.ReactNode  }) {
   const location = useLocation();
   const isAdmin = location.pathname.startsWith('/admin');
+  const isMyAccount = location.pathname.startsWith('/my-account');
 
   return (
     <>
-      {!isAdmin && <TopBar />}
-      {!isAdmin && <Navbarr />}
+      {!isAdmin && !isMyAccount && <TopBar />}
+      {!isAdmin && !isMyAccount && <Navbarr />}
       {children}
-      {!isAdmin && <FooterUi />}
+      {!isAdmin && !isMyAccount && <FooterUi />}
     </>
   );
 }

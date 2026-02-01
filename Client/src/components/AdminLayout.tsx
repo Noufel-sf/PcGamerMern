@@ -1,4 +1,3 @@
-import { AppSidebar } from '@/components/app-sidebar';
 import {
   SidebarProvider,
   SidebarInset,
@@ -85,7 +84,7 @@ export default function AdminLayout({ children }) {
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem>
-                <BreadcrumbLink href="/admin">Admin Dashboard</BreadcrumbLink>
+                <BreadcrumbLink href="/admin-seller">Admin Dashboard</BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator />
               <BreadcrumbItem>

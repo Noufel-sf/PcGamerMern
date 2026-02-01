@@ -72,8 +72,8 @@ import { ButtonLoading } from '@/components/ui/ButtonLoading';
         <div className="flex w-full max-w-sm flex-col gap-6">
           <Tabs defaultValue="account">
             <TabsList>
-              <TabsTrigger value="account">Account</TabsTrigger>
-              <TabsTrigger value="password">Password</TabsTrigger>
+              <TabsTrigger value="account" className="cursor-pointer">Account</TabsTrigger>
+              <TabsTrigger value="password"className="cursor-pointer">Password</TabsTrigger>
             </TabsList>
             <TabsContent value="account">
               <form onSubmit={handleChangeInfo}>
@@ -103,11 +103,11 @@ import { ButtonLoading } from '@/components/ui/ButtonLoading';
                       />
                     </div>
                   </CardContent>
-                  <CardFooter>
+                  <CardFooter className="mt-4">
                     {loading ? (
                       <ButtonLoading />
                     ) : (
-                      <Button type="submit">Save changes</Button>
+                      <Button type="submit" >Save changes</Button>
                     )}
                   </CardFooter>
                 </Card>
@@ -145,7 +145,7 @@ import { ButtonLoading } from '@/components/ui/ButtonLoading';
                       />
                     </div>
                   </CardContent>
-                  <CardFooter>
+                  <CardFooter className="mt-4">
                     <Button>Save password</Button>
                   </CardFooter>
                 </Card>

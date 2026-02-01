@@ -21,9 +21,9 @@ import AdminUsers from "./pages/AdminUsers";
 import CompleteOrder from "./pages/CompleteOrder";
 import HelpCenter from "./pages/HelpCenter";
 import About from "./pages/About";
+import SellerProfilePage from "./pages/SellerProfilePage";
+import AllProductsPage from "./pages/AllProductsPage";
 import LayoutWrapper from "./lib/Layout";
-
-
 
 const App = () => {
   return (
@@ -31,92 +31,94 @@ const App = () => {
       <Toaster position="top-center" />
 
       <BrowserRouter>
-        <LayoutWrapper >
-        <Routes>
-          {/* Main Routes */}
-          <Route path="/" element={<HomePage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-          <Route path="/help" element={<HelpCenter />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/completeorder" element={<CompleteOrder />} />
+        <LayoutWrapper>
+          <Routes>
+            {/* Main Routes */}
+            <Route path="/" element={<HomePage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/help" element={<HelpCenter />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/completeorder" element={<CompleteOrder />} />
+            <Route path="/seller" element={<SellerProfilePage />} />
 
-          {/* Product Routes */}
-          <Route path="/product/:id" element={<SingleProductPage />} />
-          <Route path="/cart" element={<CartPage />} />
+            {/* Product Routes */}
+            <Route path="/products" element={<AllProductsPage />} />
+            <Route path="/product/:id" element={<SingleProductPage />} />
+            <Route path="/cart" element={<CartPage />} />
 
-          {/* Category Routes */}
-          <Route path="/category/:categoryName" element={<CategoryPage />} />
+            {/* Category Routes */}
+            <Route path="/category/:categoryName" element={<CategoryPage />} />
 
-          <Route
-            path="/my-account"
-            element={
-              <ProtectedRoute>
-                <MyAccountLayout />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/settings"
-            element={
-              <ProtectedRoute>
-                <AccountSettings />
-              </ProtectedRoute>
-            }
-          />
-          <Route
+            <Route
+              path="/my-account"
+              element={
+                <ProtectedRoute>
+                  <MyAccountLayout />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/my-account/settings"
+              element={
+                <ProtectedRoute>
+                  <AccountSettings />
+                </ProtectedRoute>
+              }
+            />
+            {/* <Route
             path="/orders"
             element={
               <ProtectedRoute>
                 <MyOrders />
               </ProtectedRoute>
             }
-          />
+          /> */}
 
-          <Route
-            path="/admin"
-            element={
-              <ProtectedAdminRoute>
-                <AdminLayout />
-              </ProtectedAdminRoute>
-            }
-          />
+            <Route
+              path="/admin-seller"
+              element={
+                <ProtectedAdminRoute>
+                  <AdminLayout />
+                </ProtectedAdminRoute>
+              }
+            />
 
-          <Route
-            path="/admin/categories"
-            element={
-              <ProtectedAdminRoute>
-                <AdminCategories />
-              </ProtectedAdminRoute>
-            }
-          />
-          <Route
-            path="/admin/products"
-            element={
-              <ProtectedAdminRoute>
-                <AdminProducts />
-              </ProtectedAdminRoute>
-            }
-          />
-          <Route
-            path="/admin/orders"
-            element={
-              <ProtectedAdminRoute>
-                <AdminAllOrders />
-              </ProtectedAdminRoute>
-            }
-          />
-          <Route
-            path="/admin/users"
-            element={
-              <ProtectedAdminRoute>
-                <AdminUsers />
-              </ProtectedAdminRoute>
-            }
-          />
+            <Route
+              path="/admin-seller/categories"
+              element={
+                <ProtectedAdminRoute>
+                  <AdminCategories />
+                </ProtectedAdminRoute>
+              }
+            />
+            <Route
+              path="/admin-seller/products"
+              element={
+                <ProtectedAdminRoute>
+                  <AdminProducts />
+                </ProtectedAdminRoute>
+              }
+            />
+            <Route
+              path="/admin-seller/orders"
+              element={
+                <ProtectedAdminRoute>
+                  <AdminAllOrders />
+                </ProtectedAdminRoute>
+              }
+            />
+            <Route
+              path="/admin-seller/users"
+              element={
+                <ProtectedAdminRoute>
+                  <AdminUsers />
+                </ProtectedAdminRoute>
+              }
+            />
 
-          <Route path="*" element={<NotFoundPage />} />
-        </Routes>
+            <Route path="*" element={<NotFoundPage />} />
+          </Routes>
         </LayoutWrapper>
       </BrowserRouter>
     </>

@@ -88,17 +88,7 @@ export function ProductCard({
           Add to cart
         </Button>
 
-        <Button
-          size="icon"
-          variant="outline"
-          className="shrink-0"
-          onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
-            e.preventDefault();
-          }}
-          aria-label="Add to wishlist"
-        >
-          <Heart className="h-4 w-4" />
-        </Button>
+
       </div>
     </Card>
   );

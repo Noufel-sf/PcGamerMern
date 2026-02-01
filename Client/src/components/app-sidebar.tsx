@@ -1,7 +1,6 @@
-import * as React from 'react';
-
 import { SearchForm } from '@/components/search-form';
 import { VersionSwitcher } from '@/components/version-switcher';
+import { Link } from 'react-router-dom';
 import {
   Sidebar,
   SidebarContent,
@@ -25,12 +24,12 @@ const data = {
       items: [
         {
           title: 'Account Settings',
-          url: '/settings',
+          url: '/my-account/settings',
         },
-        {
-          title: 'My Orders',
-          url: '/orders',
-        },
+        // {
+        //   title: 'My Orders',
+        //   url: '/orders',
+        // },
       ],
     },
   ],
@@ -55,7 +54,7 @@ export function AppSidebar({ ...props }) {
                 {item.items.map((item) => (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild isActive={item.isActive}>
-                      <a href={item.url}>{item.title}</a>
+                      <Link to={item.url}>{item.title}</Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))}

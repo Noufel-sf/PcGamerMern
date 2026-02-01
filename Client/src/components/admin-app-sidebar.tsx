@@ -1,4 +1,3 @@
-import * as React from 'react';
 import { VersionSwitcher } from '@/components/version-switcher';
 import {
   Sidebar,
@@ -12,6 +11,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from '@/components/ui/sidebar';
+import { Link } from 'react-router-dom';
 
 // This is sample data.
 const data = {
@@ -21,21 +21,21 @@ const data = {
       title: 'Admin Dashboard',
       url: '#',
       items: [
-        {
-          title: 'Users',
-          url: '/admin/users',
-        },
-        {
-          title: 'Categories',
-          url: '/admin/categories',
-        },
+        // {
+        //   title: 'Users',
+        //   url: '/admin/users',
+        // },
+        // {
+        //   title: 'Categories',
+        //   url: '/admin/categories',
+        // },
         {
           title: 'Products',
-          url: '/admin/products',
+          url: '/admin-seller/products',
         },
         {
           title: 'Orders',
-          url: '/admin/orders',
+          url: '/admin-seller/orders',
         },
       ],
     },
@@ -61,7 +61,7 @@ export function AdminAppSidebar({ ...props }) {
                 {item.items.map((item) => (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild isActive={item.isActive}>
-                      <a href={item.url}>{item.title}</a>
+                      <Link to={item.url}>{item.title}</Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))}

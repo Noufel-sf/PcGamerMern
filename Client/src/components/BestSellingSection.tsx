@@ -124,7 +124,7 @@ const BestSellingSection = () => {
             ))}
       </Swiper>
       <div className="">
-        <Link to="/products/best-selling">  
+        <Link to="/products">  
           <Button
            size="lg"
            className="mt-8 mx-auto bg-primary hover:bg-primary/20 flex items-center gap-2">

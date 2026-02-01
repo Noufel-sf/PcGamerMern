@@ -1,5 +1,4 @@
 import { useAuth } from '@/context/AuthContext';
-import React from 'react';
 import { Navigate } from 'react-router';
 import { Spinner } from './ui/Spinner';
 

@@ -43,7 +43,7 @@ export default function AdminSidebarLayout({
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem>
-                <BreadcrumbLink href="/admin">Admin Dashboard</BreadcrumbLink>
+                <BreadcrumbLink href="/admin-seller">Admin Dashboard</BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator />
               <BreadcrumbItem>
