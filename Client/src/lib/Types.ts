@@ -7,6 +7,34 @@ export interface User {
 	role: string;
 }
 
+export type Product = {
+	id: string;
+	name: string;	
+	image: string;
+	price: number;
+	originalPrice?: number; // crossed-out price
+	currency?: string;	
+	discountPercent?: number;
+	averageRating?: number;
+	numOfReviews?: number;
+};
+
+
+export type Job = {
+	id: string;
+	title: string;	
+	company: string;
+	location: string;
+	salary: string;
+	type: string;
+	experience: string;
+	description: string;
+	requirements: string[];
+};
+
+
+
+
 export interface AuthContextType {
 	user: User | null;
 	setUser: Dispatch<SetStateAction<User | null>>;

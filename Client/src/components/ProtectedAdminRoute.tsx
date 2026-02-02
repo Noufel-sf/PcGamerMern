@@ -1,12 +1,11 @@
 import { useAuth } from '@/context/AuthContext';
-import React from 'react';
-import { Navigate, useNavigate } from 'react-router';
+import { useNavigate } from 'react-router';
 import { Spinner } from './ui/Spinner';
 import NotAuthorizedPage from '@/pages/NotAuthorizedPage';
 
 
 
-const ProtectedAdminRoute = ({ children }) => {
+const ProtectedAdminRoute = ({ children }: { children: React.ReactNode }) => {
   let navigate = useNavigate();
   const { user, loading } = useAuth();
 
@@ -18,7 +17,7 @@ const ProtectedAdminRoute = ({ children }) => {
     navigate('/login');
   }
 
-  if (user.role !== 'ADMIN') {
+  if (user?.role !== 'ADMIN') {
     return <NotAuthorizedPage />;
   }
   return children;

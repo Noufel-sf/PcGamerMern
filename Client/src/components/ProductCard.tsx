@@ -11,7 +11,6 @@ import StarRating from "./ui/StarRating";
 
 export function ProductCard({
   product,
-  user,
   addToCart,
 }: {
   product: {
@@ -25,13 +24,11 @@ export function ProductCard({
     averageRating?: number;
     numOfReviews?: number;
   };
-  user: any;
   addToCart: (id: string) => void;
 }) {
-  const navigate = useNavigate();
 
   return (
-    <Card className="h-full max-w-[300px] mx-auto overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+    <Card className="h-full w-full mx-auto overflow-hidden shadow-sm hover:shadow-md transition-shadow">
       <Link to={`/product/${product.id}`} className="block">
         <CardHeader className="p-0 relative">
           {/* Product Image */}
@@ -77,10 +74,7 @@ export function ProductCard({
           className="flex-1 bg-primary hover:bg-primary/20"
           onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
             e.preventDefault();
-            if (!user) {
-              navigate("/login");
-              return;
-            }
+          
             addToCart(product.id);
           }}
         >

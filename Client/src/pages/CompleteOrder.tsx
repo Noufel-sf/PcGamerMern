@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState, useCallback, useMemo, memo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -27,6 +27,7 @@ import {
 import { useCart } from "@/context/CartContext";
 import axiosInstance from "@/lib/Api";
 import toast from "react-hot-toast";
+import CompleteOrderSkeleton from "@/components/CompleteOrderSkeleton";
 import {
   Truck,
   MapPin,
@@ -39,16 +40,20 @@ import {
 import { checkoutSchema, type CheckoutFormValues } from "@/lib/zodValidation";
 import { wilayas, shippingOptions } from "@/data";
 
-const CompleteOrder = () => {
+function CompleteOrder() {
   const { cart, total, loading } = useCart();
   const navigate = useNavigate();
   const [submitting, setSubmitting] = useState(false);
 
   // Enhanced shipping options with icons
-  const shippingOptionsWithIcons = shippingOptions.map((option) => ({
-    ...option,
-    icon: option.id === "standard" ? Truck : Package,
-  }));
+  const shippingOptionsWithIcons = useMemo(
+    () =>
+      shippingOptions.map((option) => ({
+        ...option,
+        icon: option.id === "standard" ? Truck : Package,
+      })),
+    [],
+  );
 
   const form = useForm<CheckoutFormValues>({
     resolver: zodResolver(checkoutSchema),
@@ -65,87 +70,112 @@ const CompleteOrder = () => {
     },
   });
 
-  const selectedShipping = shippingOptions.find(
-    (opt) => opt.id === form.watch("shippingMethod"),
-  );
-  const shippingCost = selectedShipping?.price || 0;
-  const grandTotal = total + shippingCost;
+  const selectedShippingMethod = form.watch("shippingMethod");
 
-  const onSubmit = async (data: CheckoutFormValues) => {
-    try {
-      setSubmitting(true);
-      const response = await axiosInstance.post("/order", {
-        ...data,
-        items: cart,
-        total: grandTotal,
-      });
-      toast.success("Order placed successfully!");
-      navigate(`/order-confirmation/${response.data.orderId}`);
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Order failed");
-    } finally {
-      setSubmitting(false);
-    }
-  };
+  const { shippingCost, grandTotal } = useMemo(() => {
+    const selectedShipping = shippingOptions.find(
+      (opt) => opt.id === selectedShippingMethod,
+    );
+    const cost = selectedShipping?.price || 0;
+    return {
+      shippingCost: cost,
+      grandTotal: total + cost,
+    };
+  }, [selectedShippingMethod, total]);
+
+  const onSubmit = useCallback(
+    async (data: CheckoutFormValues) => {
+      try {
+        setSubmitting(true);
+        const response = await axiosInstance.post("/order", {
+          ...data,
+          items: cart,
+          total: grandTotal,
+        });
+        toast.success("Order placed successfully!");
+        navigate(`/order-confirmation/${response.data.orderId}`);
+      } catch (error: any) {
+        toast.error(error?.response?.data?.message || "Order failed");
+      } finally {
+        setSubmitting(false);
+      }
+    },
+    [cart, grandTotal, navigate],
+  );
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p>Loading checkout...</p>
-        </div>
-      </div>
-    );
+    return <CompleteOrderSkeleton />;
   }
 
   if (cart.length === 0) {
     return (
-      <div className="container mx-auto px-4 py-16 text-center">
-        <Package className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-        <h2 className="text-2xl font-bold mb-2">Your cart is empty</h2>
-        <p className="text-muted-foreground mb-6">
+      <main
+        className="container mx-auto px-4 py-16 text-center"
+        role="status"
+        aria-live="polite"
+      >
+        <Package
+          className="w-16 h-16 mx-auto mb-4 text-muted-foreground"
+          aria-hidden="true"
+        />
+        <h1 className="text-2xl sm:text-3xl font-bold mb-2">
+          Your cart is empty
+        </h1>
+        <p className="text-muted-foreground mb-6 max-w-md mx-auto">
           Add items to your cart before checking out
         </p>
-        <Button onClick={() => navigate("/")}>Continue Shopping</Button>
-      </div>
+        <Button
+          onClick={() => navigate("/")}
+          size="lg"
+          variant="default"
+          className=""
+          type="button"
+          aria-label="Continue shopping"
+        >
+          Continue Shopping
+        </Button>
+      </main>
     );
   }
 
   return (
-    <div className="min-h-screen bg-muted/30">
+    <main className="min-h-screen bg-muted/30">
       <div className="container mx-auto px-4 py-8 lg:py-12">
         {/* Header */}
-        <div className="mb-8">
+        <header className="mb-8">
           <Button
             variant="ghost"
+            size="default"
             onClick={() => navigate("/cart")}
             className="mb-4"
+            type="button"
+            aria-label="Back to cart"
           >
-            <ArrowLeft className="w-4 h-4 mr-2" />
+            <ArrowLeft className="w-4 h-4 mr-2" aria-hidden="true" />
             Back to Cart
           </Button>
           <h1 className="text-3xl lg:text-4xl font-bold flex items-center gap-3">
-            <ShoppingBag className="w-8 h-8 text-primary" />
+            <ShoppingBag className="w-8 h-8 text-primary" aria-hidden="true" />
             Complete Your Order
           </h1>
           <p className="text-muted-foreground mt-2">
             Fill in your details to complete your purchase
           </p>
-        </div>
+        </header>
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Left: Checkout Form */}
-          <div className="lg:col-span-2">
+          <section className="lg:col-span-2" aria-label="Checkout form">
             <Form {...form}>
               <form
                 onSubmit={form.handleSubmit(onSubmit)}
                 className="space-y-6"
+                aria-label="Complete order form"
               >
                 {/* Contact Information */}
-                <Card>
-                  <CardHeader>
+                <Card className="">
+                  <CardHeader className="">
                     <CardTitle className="flex items-center gap-2">
-                      <User className="w-5 h-5" />
+                      <User className="w-5 h-5" aria-hidden="true" />
                       Contact Information
                     </CardTitle>
                   </CardHeader>
@@ -154,7 +184,7 @@ const CompleteOrder = () => {
                       <FormField
                         control={form.control}
                         name="firstName"
-                        render={({ field }) => (
+                        render={({ field } ) => (
                           <FormItem>
                             <FormLabel>First Name *</FormLabel>
                             <FormControl>
@@ -219,10 +249,10 @@ const CompleteOrder = () => {
                 </Card>
 
                 {/* Shipping Address & Method */}
-                <Card>
-                  <CardHeader>
+                <Card className="">
+                  <CardHeader className="">
                     <CardTitle className="flex items-center gap-2">
-                      <MapPin className="w-5 h-5" />
+                      <MapPin className="w-5 h-5" aria-hidden="true" />
                       Shipping Details
                     </CardTitle>
                   </CardHeader>
@@ -270,13 +300,17 @@ const CompleteOrder = () => {
                               defaultValue={field.value}
                             >
                               <FormControl>
-                                <SelectTrigger>
+                                <SelectTrigger className="">
                                   <SelectValue placeholder="Select wilaya" />
                                 </SelectTrigger>
                               </FormControl>
-                              <SelectContent>
+                              <SelectContent className="">
                                 {wilayas.map((wilaya) => (
-                                  <SelectItem key={wilaya} value={wilaya}>
+                                  <SelectItem
+                                    key={wilaya}
+                                    value={wilaya}
+                                    className=""
+                                  >
                                     {wilaya}
                                   </SelectItem>
                                 ))}
@@ -296,7 +330,7 @@ const CompleteOrder = () => {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-base font-semibold flex items-center gap-2">
-                            <Truck className="w-4 h-4" />
+                            <Truck className="w-4 h-4" aria-hidden="true" />
                             Shipping Method
                           </FormLabel>
                           <FormControl>
@@ -324,7 +358,10 @@ const CompleteOrder = () => {
                                   >
                                     <div className="flex items-center w-full justify-between">
                                       <div className="flex items-center gap-3">
-                                        <option.icon className="w-5 h-5 text-muted-foreground" />
+                                        <option.icon
+                                          className="w-5 h-5 text-muted-foreground"
+                                          aria-hidden="true"
+                                        />
                                         <div>
                                           <p className="font-semibold">
                                             {option.name}
@@ -376,19 +413,24 @@ const CompleteOrder = () => {
                 {/* Submit Button */}
                 <Button
                   type="submit"
-                  disabled={submitting}
+                  disabled={submitting || cart.length === 0}
                   className="w-full"
                   size="lg"
+                  variant="default"
+                  aria-label={submitting ? "Processing order" : "Place order"}
                 >
                   {submitting ? (
                     <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                      <div
+                        className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"
+                        aria-hidden="true"
+                      />
                       Processing Order...
                     </>
                   ) : (
                     <>
-                      <Lock className="w-4 h-4 mr-2" />
-                      Place Order - ${grandTotal.toFixed(2)}
+                      <Lock className="w-4 h-4 mr-2" aria-hidden="true" />
+                      Place Order - {grandTotal.toFixed(2)} DZ
                     </>
                   )}
                 </Button>
@@ -399,17 +441,21 @@ const CompleteOrder = () => {
                 </p>
               </form>
             </Form>
-          </div>
+          </section>
 
           {/* Right: Order Summary */}
-          <div className="space-y-4">
-            <Card className="sticky top-4">
-              <CardHeader>
-                <CardTitle>Order Summary</CardTitle>
+          <aside className="space-y-4" aria-label="Order summary">
+            <Card className="sticky top-4 shadow-lg">
+              <CardHeader className="">
+                <CardTitle className="">Order Summary</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4 mt-6">
                 {/* Cart Items */}
-                <div className="space-y-3 max-h-80 overflow-y-auto">
+                <div
+                  className="space-y-3 max-h-80 overflow-y-auto"
+                  role="list"
+                  aria-label="Cart items"
+                >
                   {cart.map((item) => (
                     <div key={item.product.id} className="flex gap-3">
                       <div className="relative  w-16 h-16 bg-muted rounded flex-shrink-0">
@@ -417,8 +463,15 @@ const CompleteOrder = () => {
                           src={item.product.image}
                           alt={item.product.name}
                           className="w-full h-full object-contain p-1"
+                          loading="lazy"
+                          width={64}
+                          height={64}
                         />
-                        <Badge className="absolute -top-0 right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs">
+                        <Badge
+                          variant="default"
+                          className="absolute -top-0 right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs"
+                          aria-label={`Quantity: ${item.quantity}`}
+                        >
                           {item.quantity}
                         </Badge>
                       </div>
@@ -427,68 +480,53 @@ const CompleteOrder = () => {
                           {item.product.name}
                         </p>
                         <p className="text-sm text-muted-foreground">
-                          ${item.product.price}
+                          ${item.product.price.toFixed(2)}
                         </p>
                       </div>
                     </div>
                   ))}
                 </div>
 
-                <Separator />
+                <Separator className="" />
 
                 {/* Price Breakdown */}
-                <div className="space-y-2 text-sm">
+                <dl className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">
+                    <dt className="text-muted-foreground">
                       Subtotal ({cart.length} items)
-                    </span>
-                    <span className="font-medium">${total.toFixed(2)}</span>
+                    </dt>
+                    <dd className="font-medium">${total.toFixed(2)}</dd>
                   </div>
 
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Shipping</span>
-                    <span className="font-medium">
-                      {shippingCost === 0 ? (
-                        <span className="text-green-600 font-semibold">
-                          FREE
-                        </span>
-                      ) : (
-                        `${shippingCost} DA`
-                      )}
-                    </span>
-                  </div>
-
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Tax</span>
-                    <span className="font-medium">$0.00</span>
-                  </div>
-
-                  <Separator />
+                  <Separator className="" />
 
                   <div className="flex justify-between text-base pt-2">
-                    <span className="font-bold">Total</span>
-                    <span className="font-bold text-green-500 text-xl">
+                    <dt className="font-bold">Total</dt>
+                    <dd className="font-bold text-green-500 text-xl">
                       {grandTotal.toFixed(2)} DZ
-                    </span>
+                    </dd>
                   </div>
-                </div>
+                </dl>
 
-                <Separator />
+                <Separator className="" />
 
                 {/* Trust Badges */}
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Lock className="w-4 h-4 text-green-600" />
+                    <Lock
+                      className="w-4 h-4 text-green-600"
+                      aria-hidden="true"
+                    />
                     <span>Secure checkout guaranteed</span>
                   </div>
                 </div>
               </CardContent>
             </Card>
-          </div>
+          </aside>
         </div>
       </div>
-    </div>
+    </main>
   );
-};
+}
 
-export default CompleteOrder;
+export default memo(CompleteOrder);

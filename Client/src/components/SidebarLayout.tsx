@@ -23,37 +23,50 @@ import {
 import { Button } from './ui/button';
 import { Sun, Moon } from 'lucide-react';
 import { Link } from 'react-router';
+import type { ReactNode } from 'react';
+
+interface SidebarLayoutProps {
+  children: ReactNode;
+  breadcrumbTitle?: string;
+}
 
 export default function SidebarLayout({
   children,
   breadcrumbTitle = 'Dashboard',
-}) {
+}: SidebarLayoutProps) {
   const { setTheme } = useTheme();
 
   return (
-    <SidebarProvider>
+    <SidebarProvider
+      open={undefined}
+      onOpenChange={undefined}
+      className=""
+      style={undefined}
+    >
       <AppSidebar />
-      <SidebarInset>
+      <SidebarInset className="">
         <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-          <SidebarTrigger className="-ml-1" />
+          <SidebarTrigger className="-ml-1" onClick={undefined} />
           <Separator
             orientation="vertical"
             className="mr-2 data-[orientation=vertical]:h-4"
           />
           <Breadcrumb>
-            <BreadcrumbList>
-              <BreadcrumbItem>
-                <BreadcrumbLink href="/my-account">My Account</BreadcrumbLink>
+            <BreadcrumbList className="">
+              <BreadcrumbItem className="">
+                <BreadcrumbLink href="/my-account" asChild={false} className="">
+                  My Account
+                </BreadcrumbLink>
               </BreadcrumbItem>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                <BreadcrumbPage>{breadcrumbTitle}</BreadcrumbPage>
+              <BreadcrumbSeparator children={undefined} className="" />
+              <BreadcrumbItem className="">
+                <BreadcrumbPage className="">{breadcrumbTitle}</BreadcrumbPage>
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
 
           <div className="ml-auto flex items-center">
-            <Button variant="ghost">
+            <Button variant="ghost" size="default" className="">
               <Link to="/">Home</Link>
             </Button>
             <DropdownMenu>
@@ -68,13 +81,25 @@ export default function SidebarLayout({
                 align="end"
                 className="bg-white dark:bg-zinc-900 shadow-lg border border-border rounded-md"
               >
-                <DropdownMenuItem onClick={() => setTheme('light')}>
+                <DropdownMenuItem
+                  onClick={() => setTheme('light')}
+                  className=""
+                  inset={false}
+                >
                   Light
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setTheme('dark')}>
+                <DropdownMenuItem
+                  onClick={() => setTheme('dark')}
+                  className=""
+                  inset={false}
+                >
                   Dark
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setTheme('system')}>
+                <DropdownMenuItem
+                  onClick={() => setTheme('system')}
+                  className=""
+                  inset={false}
+                >
                   System
                 </DropdownMenuItem>
               </DropdownMenuContent>

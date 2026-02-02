@@ -777,3 +777,53 @@ export const jobsOfTheDay = [
     companyLogo: 'https://i.pravatar.cc/80?img=6',
   },
 ];
+
+
+export const mockOrders = [
+  {
+    id: 1001,
+    user: {
+      id: 1,
+      name: "John Doe",
+      phone : "0796528894",
+      email: "john.doe@example.com"
+    },
+    totalPrice: 299.99,
+    status: "pending",
+    createdAt: "2026-01-28T10:30:00Z",
+    orderItems: [
+      {
+        id: 1,
+        quantity: 2,
+        product: {
+          id: 101,
+          name: "Nike Air Max 2024",
+          price: 149.99,
+          image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400"
+        }
+      } ,
+       {
+        id: 2,
+        quantity: 1,
+        product: {
+          id: 102,
+          name: "Adidas Ultra Boost",
+          price: 189.50,
+          image: "https://images.unsplash.com/photo-1608231387042-66d1773070a5?w=400"
+        }
+      },
+       {
+        id: 3,
+        quantity: 1,
+        product: {
+          id: 103,
+          name: "Puma RS-X Sneakers",
+          price: 120.00,
+          image: "https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=400"
+        }
+      },
+     
+    ]
+  },
+
+];

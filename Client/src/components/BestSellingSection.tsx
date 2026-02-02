@@ -1,140 +1,150 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback} from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
-
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import type { Swiper as SwiperType } from "swiper";
 import "swiper/css";
 import "swiper/css/pagination";
 import "swiper/css/navigation";
 import { Pagination, Autoplay, Navigation } from "swiper/modules";
 import { Button } from "./ui/button";
 import { FaArrowLeft, FaArrowRight } from "react-icons/fa";
-import { PiStarFourFill } from "react-icons/pi";
 import { IoIosCart } from "react-icons/io";
-import StarRating from "./ui/StarRating";
-import { Link, useNavigate } from "react-router";
+import { Link } from "react-router";
 import Api from "@/lib/Api";
 import { SkeletonCard } from "./SkeletonCard";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import ProductCard from "./ProductCard";
+import type { Product } from "@/lib/Types";
 
 const BestSellingSection = () => {
-  const [bestSellingProducts, setBestSellingProducts] = useState([]);
+  const [bestSellingProducts, setBestSellingProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
-  let navigate = useNavigate();
   const { addToCart } = useCart();
-  const swiperRef = useRef(null);
-  const [activeIndex, setActiveIndex] = useState(0);
+  const swiperRef = useRef<SwiperType | null>(null);
 
-  useEffect(() => {
-    if (swiperRef.current && swiperRef.current.swiper) {
-      setTimeout(() => {
-        swiperRef.current.swiper.update();
-      }, 100);
-    }
-  }, []);
-
-  const fetchBestSellingProducts = async () => {
+  const fetchBestSellingProducts = useCallback(async () => {
     try {
+      setError(null);
       const { data } = await Api.get("/product/bestSelling");
-      setBestSellingProducts(data?.products);
-      console.log(
-        "Best selling products fetched successfully:",
-        data?.products,
-      );
+      setBestSellingProducts(data?.products || []);
     } catch (error) {
-      console.log(error);
+      console.error("Failed to fetch best selling products:", error);
+      setError("Failed to load products");
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchBestSellingProducts();
-  }, []);
+  }, [fetchBestSellingProducts]);
 
-  const handleSlideChange = (swiper) => {
-    setActiveIndex(swiper.realIndex);
+  const handleSlideChange = (swiper: SwiperType) => {
+    swiperRef.current = swiper;
   };
 
   return (
-    <section className="mx-auto container px-6 py-12 ">
+    <section className="mx-auto container px-6 py-12" aria-labelledby="best-selling-heading">
       <div className="heading mb-6 flex items-center justify-between">
-        <h1 className="capitalize text-2xl font-bold">best selling</h1>
-        <div className="flex items-center gap-3">
-          <button className="best-selling-prev w-8 h-8 px-2 rounded-lg flex items-center justify-center bg-orange-500 transition-all duration-200 cursor-pointer">
-            <FaArrowLeft className="text-white" />
+        <h2 id="best-selling-heading" className="capitalize text-2xl font-bold">
+          Best Selling Products
+        </h2>
+        <div className="flex items-center gap-3" role="group" aria-label="Carousel navigation">
+          <button
+            className="best-selling-prev w-8 h-8 px-2 rounded-lg flex items-center justify-center bg-orange-500 hover:bg-orange-600 transition-all duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
+            aria-label="Previous products"
+            type="button"
+          >
+            <FaArrowLeft className="text-white" aria-hidden="true" />
           </button>
-          <button className="best-selling-next w-8 h-8 px-2 rounded-lg flex items-center justify-center bg-orange-500 transition-all duration-200 cursor-pointer">
-            <FaArrowRight className="text-white" />
+          <button
+            className="best-selling-next w-8 h-8 px-2 rounded-lg flex items-center justify-center bg-orange-500 hover:bg-orange-600 transition-all duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
+            aria-label="Next products"
+            type="button"
+          >
+            <FaArrowRight className="text-white" aria-hidden="true" />
           </button>
         </div>
       </div>
-      <Swiper
-        ref={swiperRef}
-        onSlideChange={handleSlideChange}
-        spaceBetween={30}
-        modules={[Pagination, Navigation, Autoplay]}
-        autoplay={{
-          delay: 2500,
-          disableOnInteraction: false,
-        }}
-        navigation={{
-          nextEl: ".best-selling-next",
-          prevEl: ".best-selling-prev",
-        }}
-        breakpoints={{
-          0: {
-            slidesPerView: 1,
-          },
-          768: {
-            slidesPerView: 2,
-          },
-          1024: {
-            slidesPerView: 3,
-          },
-          1280: {
-            slidesPerView: 5,
-          },
-        }}
-        className="testimonial-swiper"
-      >
 
-        {loading
-          ? [...Array(5)].map((_, i) => (
-              <SwiperSlide key={i}>
-                <SkeletonCard />
-              </SwiperSlide>
-            ))
-          : bestSellingProducts.map((product) => (
-              <SwiperSlide key={product.id}>
-                <ProductCard
-                  product={product}
-                  user={user}
-                  addToCart={addToCart}
-                />
-              </SwiperSlide>
-            ))}
-      </Swiper>
-      <div className="">
-        <Link to="/products">  
-          <Button
-           size="lg"
-           className="mt-8 mx-auto bg-primary hover:bg-primary/20 flex items-center gap-2">
-            View All Best Selling Products
-            <IoIosCart className="h-5 w-5" />
+      {error ? (
+        <div className="text-center py-8 text-red-500" role="alert">
+          <p>{error}</p>
+          <Button onClick={fetchBestSellingProducts} className="mt-4">
+            Try Again
           </Button>
-        </Link>
-      </div>
-
-    
+        </div>
+      ) : (
+        <>
+          <Swiper
+            onSwiper={(swiper) => (swiperRef.current = swiper)}
+            onSlideChange={handleSlideChange}
+            spaceBetween={30}
+            modules={[Pagination, Navigation, Autoplay]}
+            autoplay={{
+              delay: 3500,
+              disableOnInteraction: true,
+              pauseOnMouseEnter: true,
+            }}
+            navigation={{
+              nextEl: ".best-selling-next",
+              prevEl: ".best-selling-prev",
+            }}
+            breakpoints={{
+              0: {
+                slidesPerView: 1,
+              },
+              768: {
+                slidesPerView: 2,
+              },
+              1024: {
+                slidesPerView: 3,
+              },
+              1280: {
+                slidesPerView: 5,
+              },
+            }}
+            className="testimonial-swiper"
+            a11y={{
+              enabled: true,
+              prevSlideMessage: "Previous product",
+              nextSlideMessage: "Next product",
+            }}
+          >
+            {loading
+              ? [...Array(5)].map((_, i) => (
+                  <SwiperSlide key={`skeleton-${i}`}>
+                    <SkeletonCard />
+                  </SwiperSlide>
+                ))
+              : bestSellingProducts.map((product) => (
+                  <SwiperSlide key={product.id}>
+                    <ProductCard
+                      product={product}
+                      addToCart={addToCart}
+                    />
+                  </SwiperSlide>
+                ))}
+          </Swiper>
+          
+          {!loading && bestSellingProducts.length > 0 && (
+            <div className="text-center">
+              <Link to="/products" aria-label="View all best selling products">
+                <Button
+                  size="lg"
+                  variant="default"
+                  className="mt-8 mx-auto bg-primary hover:bg-primary/90 flex items-center gap-2 transition-colors"
+                >
+                  View All Best Selling Products
+                  <IoIosCart className="h-5 w-5" aria-hidden="true" />
+                </Button>
+              </Link>
+            </div>
+          )}
+        </>
+      )}
     </section>
   );
 };

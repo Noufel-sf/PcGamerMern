@@ -1,11 +1,12 @@
 import { Swiper, SwiperSlide } from 'swiper/react';
+import { memo } from 'react';
 import 'swiper/css';
 import 'swiper/css/navigation';
 import { Autoplay, Navigation } from 'swiper/modules';
 import hero1 from '@/assets/hero1.png';
 import hero2 from '@/assets/hero2.png';
-import hero3 from '@/assets/hero3.png';
-import hero4 from '@/assets/hero4.png';
+import hero3 from '/hero2.png';
+import hero4 from '/hero3.jpg';
 import { FaArrowLeft, FaArrowRight } from 'react-icons/fa';
 
 const Hero = () => {
@@ -50,4 +51,4 @@ const Hero = () => {
   );
 };
 
-export default Hero;
+export default memo(Hero);

@@ -16,27 +16,34 @@ import {
 
 export default function MyAccount() {
   return (
-    <SidebarProvider>
+    <SidebarProvider
+      open={undefined}
+      onOpenChange={undefined}
+      className=""
+      style={undefined}
+    >
       {/* Sidebar */}
       <AppSidebar />
 
       {/* Main Content */}
-      <SidebarInset>
+      <SidebarInset className="">
         {/* Top Header */}
         <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-          <SidebarTrigger className="-ml-1" />
+          <SidebarTrigger className="-ml-1" onClick={undefined} />
           <Separator
             orientation="vertical"
             className="mr-2 data-[orientation=vertical]:h-4"
           />
           <Breadcrumb>
-            <BreadcrumbList>
-              <BreadcrumbItem>
-                <BreadcrumbLink href="/account">My Account</BreadcrumbLink>
+            <BreadcrumbList className="">
+              <BreadcrumbItem className="">
+                <BreadcrumbLink href="/account" asChild={false} className="">
+                  My Account
+                </BreadcrumbLink>
               </BreadcrumbItem>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                <BreadcrumbPage>Dashboard</BreadcrumbPage>
+              <BreadcrumbSeparator children={undefined} className="" />
+              <BreadcrumbItem className="">
+                <BreadcrumbPage className="">Dashboard</BreadcrumbPage>
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>

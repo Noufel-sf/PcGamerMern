@@ -1,24 +1,22 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, memo, useCallback } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import "swiper/css/navigation";
 import { Autoplay, Navigation } from "swiper/modules";
 import { FaArrowLeft, FaArrowRight } from "react-icons/fa";
-import {
-  Filter,
-  X,
-  ChevronLeft,
-  ChevronRight,
-  SlidersHorizontal,
-} from "lucide-react";
+import { Filter, X, SlidersHorizontal } from "lucide-react";
 import { ProductCard } from "@/components/ProductCard";
+import Api from "@/lib/Api";
 import ProductCardSkeleton from "@/components/ProductCardSkeleton";
+import { Pagination } from "@/components/Pagination";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import type { Product } from "@/lib/Types";
+
+
 import { Separator } from "@/components/ui/separator";
 import {
   Sheet,
@@ -52,29 +50,15 @@ const mockCategories = [
   { id: "8", title: "Automotive", count: 78 },
 ];
 
-// Mock products data
-const mockProducts = Array.from({ length: 48 }, (_, i) => ({
-  id: String(i + 1),
-  name: `Product ${i + 1}`,
-  image: `https://images.unsplash.com/photo-${1523275335684 + i}?w=300&h=300&fit=crop`,
-  price: Math.floor(Math.random() * 200) + 20,
-  originalPrice: Math.floor(Math.random() * 300) + 100,
-  currency: "USD",
-  discountPercent: Math.floor(Math.random() * 50) + 10,
-  averageRating: +(Math.random() * 2 + 3).toFixed(1),
-  numOfReviews: Math.floor(Math.random() * 500) + 10,
-  category:
-    mockCategories[Math.floor(Math.random() * mockCategories.length)].title,
-}));
 
 const ITEMS_PER_PAGE = 8;
 
-export default function AllProductsPage() {
-  const [products, setProducts] = useState(mockProducts);
+function AllProductsPage() {
+  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [priceRange, setPriceRange] = useState([0, 500]);
+  const [priceRange] = useState([0, 1000000]);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("featured");
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
@@ -83,35 +67,52 @@ export default function AllProductsPage() {
 
   // Mock user and cart function
   const user = null;
-  const addToCart = (id: string) => {
+  const addToCart = useCallback((id: string) => {
     console.log("Add to cart:", id);
-  };
+  }, []);
 
-  // Filter and sort products
+  const fetchProducts = useCallback(async () => {
+    setLoading(true);
+    try {
+      const { data } = await Api.get("/product");
+      setProducts(data.products);
+      console.log(data);
+      
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+  
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
+
+
+
+
   const filteredProducts = useMemo(() => {
     let filtered = [...products];
 
-    // Filter by category
     if (selectedCategories.length > 0) {
       filtered = filtered.filter((product) =>
         selectedCategories.includes(product.category),
       );
     }
 
-    // Filter by price range
     filtered = filtered.filter(
       (product) =>
-        product.price >= priceRange[0] && product.price <= priceRange[1],
+        product.price >= (priceRange[0] ?? 0) && product.price <= (priceRange[1] ?? 1000000),
     );
 
-    // Filter by search query
     if (searchQuery.trim()) {
       filtered = filtered.filter((product) =>
         product.name.toLowerCase().includes(searchQuery.toLowerCase()),
       );
     }
 
-    // Sort products
+
     switch (sortBy) {
       case "price-asc":
         filtered.sort((a, b) => a.price - b.price);
@@ -126,7 +127,6 @@ export default function AllProductsPage() {
         filtered.sort((a, b) => Number(b.id) - Number(a.id));
         break;
       default:
-        // featured - keep original order
         break;
     }
 
@@ -140,25 +140,23 @@ export default function AllProductsPage() {
     currentPage * ITEMS_PER_PAGE,
   );
 
-  // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
   }, [selectedCategories, priceRange, searchQuery, sortBy]);
 
-  const handleCategoryToggle = (category: string) => {
+  const handleCategoryToggle = useCallback((category: string) => {
     setSelectedCategories((prev) =>
       prev.includes(category)
         ? prev.filter((c) => c !== category)
         : [...prev, category],
     );
-  };
+  }, []);
 
-  const clearFilters = () => {
+  const clearFilters = useCallback(() => {
     setSelectedCategories([]);
-    setPriceRange([0, 500]);
     setSearchQuery("");
     setSortBy("featured");
-  };
+  }, []);
 
   const FilterSidebar = () => (
     <div className="space-y-6 px-6">
@@ -172,16 +170,18 @@ export default function AllProductsPage() {
           type="text"
           placeholder="Search by name..."
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
+          className=""
+          aria-label="Search products by name"
         />
       </div>
 
-      <Separator />
+      <Separator className="" />
 
       {/* Categories */}
-      <div className="px-6">
+      <fieldset className="px-6 lg:px-0" aria-label="Product categories">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold">Categories</h3>
+          <legend className="text-sm font-semibold">Categories</legend>
           {selectedCategories.length > 0 && (
             <Button
               variant="ghost"
@@ -200,22 +200,23 @@ export default function AllProductsPage() {
                 id={`category-${category.id}`}
                 checked={selectedCategories.includes(category.title)}
                 onCheckedChange={() => handleCategoryToggle(category.title)}
+                className=""
               />
               <label
                 htmlFor={`category-${category.id}`}
                 className="text-sm flex-1 cursor-pointer flex items-center justify-between"
               >
                 <span>{category.title}</span>
-                <span className="text-xs text-muted-foreground">
+                <span className="text-xs text-muted-foreground" aria-label={`${category.count} items`}>
                   ({category.count})
                 </span>
               </label>
             </div>
           ))}
         </div>
-      </div>
+      </fieldset>
 
-      <Separator />
+      <Separator className="" />
 
       {/* Clear All Filters */}
       <Button
@@ -231,9 +232,9 @@ export default function AllProductsPage() {
   );
 
   return (
-    <>
+    <main>
       {/* Hero Ad Section */}
-      <section className="px-4 sm:px-6 py-6 sm:py-12 mx-auto container flex items-stretch gap-5 min-h-[300px] sm:min-h-[500px]">
+      <section className="px-4 sm:px-6 py-6 sm:py-12 mx-auto container flex items-stretch gap-5 min-h-[300px] sm:min-h-[500px]" aria-label="Promotional banners">
         <Swiper
           navigation={{
             prevEl: ".custom-prev-all",
@@ -285,10 +286,10 @@ export default function AllProductsPage() {
       <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Desktop Sidebar */}
-          <aside className="hidden lg:block w-72 flex-shrink-0">
+          <aside className="hidden lg:block w-72 flex-shrink-0" aria-label="Product filters">
             <div className="sticky top-4 bg-card border rounded-lg p-6 shadow-sm">
               <div className="flex items-center gap-2 mb-6">
-                <Filter className="w-5 h-5" />
+                <Filter className="w-5 h-5" aria-hidden="true" />
                 <h2 className="text-lg font-bold">Filters</h2>
               </div>
               <FilterSidebar />
@@ -296,9 +297,9 @@ export default function AllProductsPage() {
           </aside>
 
           {/* Products Section */}
-          <main className="flex-1 min-w-0">
+          <section className="flex-1 min-w-0" aria-label="Products listing">
             {/* Header */}
-            <div className="flex  flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+            <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
               <div>
                 <h1 className="text-2xl sm:text-3xl font-bold mb-1">
                   All Products
@@ -316,13 +317,14 @@ export default function AllProductsPage() {
                   onOpenChange={setMobileFiltersOpen}
                 >
                   <SheetTrigger asChild>
-                    <Button variant="outline" className="lg:hidden">
-                      <SlidersHorizontal className="w-4 h-4 mr-2" />
+                    <Button variant="outline" className="lg:hidden" size="" aria-label="Open filters menu">
+                      <SlidersHorizontal className="w-4 h-4 mr-2" aria-hidden="true" />
                       Filters
                       {(selectedCategories.length > 0 || searchQuery) && (
                         <Badge
                           variant="destructive"
                           className="ml-2 px-1.5 py-0.5 text-xs"
+                          aria-label={`${selectedCategories.length + (searchQuery ? 1 : 0)} active filters`}
                         >
                           {selectedCategories.length + (searchQuery ? 1 : 0)}
                         </Badge>
@@ -330,12 +332,12 @@ export default function AllProductsPage() {
                     </Button>
                   </SheetTrigger>
                   <SheetContent side="left" className="w-80 overflow-y-auto">
-                    <SheetHeader>
+                    <SheetHeader className="">
                       <SheetTitle className="flex items-center gap-2">
-                        <Filter className="w-5 h-5" />
+                        <Filter className="w-5 h-5" aria-hidden="true" />
                         Filters
                       </SheetTitle>
-                      <SheetDescription>
+                      <SheetDescription className="">
                         Filter products by category, price, and more
                       </SheetDescription>
                     </SheetHeader>
@@ -347,69 +349,90 @@ export default function AllProductsPage() {
 
                 {/* Sort By */}
                 <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger className="w-[180px]">
+                  <SelectTrigger className="w-[180px]" aria-label="Sort products by">
                     <SelectValue placeholder="Sort by" />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="featured">Featured</SelectItem>
-                    <SelectItem value="newest">Newest</SelectItem>
-                    <SelectItem value="price-asc">
+                  <SelectContent className="">
+                    <SelectItem value="featured" className="">Featured</SelectItem>
+                    <SelectItem value="newest" className="">Newest</SelectItem>
+                    <SelectItem value="price-asc" className="">
                       Price: Low to High
                     </SelectItem>
-                    <SelectItem value="price-desc">
+                    <SelectItem value="price-desc" className="">
                       Price: High to Low
                     </SelectItem>
-                    <SelectItem value="rating">Highest Rated</SelectItem>
+                    <SelectItem value="rating" className="">Highest Rated</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-            </div>
+            </header>
 
             {/* Active Filters */}
             {(selectedCategories.length > 0 || searchQuery) && (
-              <div className="flex flex-wrap items-center gap-2  mb-6">
-                <span className="text-sm font-medium">Active filters:</span>
-                {selectedCategories.map((category) => (
-                  <Badge
-                    key={category}
-                    variant="secondary"
-                    className="cursor-pointer hover:bg-primary transition duration-300"
-                    onClick={() => handleCategoryToggle(category)}
+              <div className="flex flex-wrap items-center gap-2 mb-6" role="region" aria-label="Active filters">
+                <span className="text-sm font-medium" id="active-filters-label">Active filters:</span>
+                <div className="flex flex-wrap gap-2" aria-labelledby="active-filters-label">
+                  {selectedCategories.map((category) => (
+                    <Badge
+                      key={category}
+                      variant="secondary"
+                      className="cursor-pointer hover:bg-primary transition duration-300"
+                      onClick={() => handleCategoryToggle(category)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e: React.KeyboardEvent) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          handleCategoryToggle(category);
+                        }
+                      }}
+                      aria-label={`Remove ${category} filter`}
+                    >
+                      {category}
+                      <X className="w-3 h-3 ml-1" aria-hidden="true" />
+                    </Badge>
+                  ))}
+                  {searchQuery && (
+                    <Badge
+                      variant="secondary"
+                      className="cursor-pointer hover:bg-destructive hover:text-destructive-foreground transition duration-200"
+                      onClick={() => setSearchQuery("")}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e: React.KeyboardEvent) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          setSearchQuery("");
+                        }
+                      }}
+                      aria-label="Remove search filter"
+                    >
+                      Search: "{searchQuery}"
+                      <X className="w-3 h-3 ml-1" aria-hidden="true" />
+                    </Badge>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={clearFilters}
+                    className="h-auto p-0 text-xs"
+                    aria-label="Clear all filters"
                   >
-                    {category}
-                    <X className="w-3 h-3 ml-1" />
-                  </Badge>
-                ))}
-                {searchQuery && (
-                  <Badge
-                    variant="secondary"
-                    className="cursor-pointer hover:bg-destructive hover:text-destructive-foreground"
-                    onClick={() => setSearchQuery("")}
-                  >
-                    Search: "{searchQuery}"
-                    <X className="w-3 h-3 ml-1" />
-                  </Badge>
-                )}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={clearFilters}
-                  className="h-auto p-0 text-xs"
-                >
-                  Clear all
-                </Button>
+                    Clear all
+                  </Button>
+                </div>
               </div>
             )}
 
             {/* Products Grid */}
             {loading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" role="status" aria-label="Loading products">
                 {Array.from({ length: ITEMS_PER_PAGE }).map((_, i) => (
-                  <ProductCardSkeleton key={i} />
+                  <ProductCardSkeleton key={`skeleton-${i}`} />
                 ))}
               </div>
             ) : paginatedProducts.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6" role="list" aria-label={`Showing ${paginatedProducts.length} products`}>
                 {paginatedProducts.map((product) => (
                   <ProductCard
                     key={product.id}
@@ -420,8 +443,8 @@ export default function AllProductsPage() {
                 ))}
               </div>
             ) : (
-              <div className="text-center py-16">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted mb-4">
+              <div className="text-center py-16" role="status" aria-live="polite">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted mb-4" aria-hidden="true">
                   <Filter className="w-8 h-8 text-muted-foreground" />
                 </div>
                 <h3 className="text-lg font-semibold mb-2">
@@ -430,75 +453,25 @@ export default function AllProductsPage() {
                 <p className="text-muted-foreground mb-4">
                   Try adjusting your filters or search query
                 </p>
-                <Button onClick={clearFilters}>Clear all filters</Button>
+                <Button onClick={clearFilters} variant="" className="" size="" type="button">Clear all filters</Button>
               </div>
             )}
 
             {/* Pagination */}
-            {totalPages > 1 && paginatedProducts.length > 0 && (
-              <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-                <p className="text-sm text-muted-foreground">
-                  Page {currentPage} of {totalPages}
-                </p>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    onClick={() =>
-                      setCurrentPage((prev) => Math.max(1, prev - 1))
-                    }
-                    disabled={currentPage === 1}
-                  >
-                    <ChevronLeft className="w-4 h-4 mr-1" />
-                   
-                  </Button>
-
-                  <div className="flex items-center gap-1">
-                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                      let pageNumber;
-                      if (totalPages <= 5) {
-                        pageNumber = i + 1;
-                      } else if (currentPage <= 3) {
-                        pageNumber = i + 1;
-                      } else if (currentPage >= totalPages - 2) {
-                        pageNumber = totalPages - 4 + i;
-                      } else {
-                        pageNumber = currentPage - 2 + i;
-                      }
-
-                      return (
-                        <Button
-                          key={pageNumber}
-                          variant={
-                            currentPage === pageNumber ? "default" : "outline"
-                          }
-                          size="sm"
-                          onClick={() => setCurrentPage(pageNumber)}
-                          className="w-9 h-9"
-                        >
-                          {pageNumber}
-                        </Button>
-                      );
-                    })}
-                  </div>
-
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    onClick={() =>
-                      setCurrentPage((prev) => Math.min(totalPages, prev + 1))
-                    }
-                    disabled={currentPage === totalPages}
-                  >
-                    
-                    <ChevronRight className="w-4 h-4 ml-1" />
-                  </Button>
-                </div>
-              </div>
+            {paginatedProducts.length > 0 && (
+              <nav aria-label="Products pagination">
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                />
+              </nav>
             )}
-          </main>
+          </section>
         </div>
       </div>
-    </>
+    </main>
   );
 }
+
+export default memo(AllProductsPage);

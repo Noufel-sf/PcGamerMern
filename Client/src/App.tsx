@@ -39,7 +39,7 @@ const App = () => {
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/help" element={<HelpCenter />} />
             <Route path="/about" element={<About />} />
-            <Route path="/completeorder" element={<CompleteOrder />} />
+            <Route path="/complete-order" element={<CompleteOrder />} />
             <Route path="/seller" element={<SellerProfilePage />} />
 
             {/* Product Routes */}
@@ -66,15 +66,6 @@ const App = () => {
                 </ProtectedRoute>
               }
             />
-            {/* <Route
-            path="/orders"
-            element={
-              <ProtectedRoute>
-                <MyOrders />
-              </ProtectedRoute>
-            }
-          /> */}
-
             <Route
               path="/admin-seller"
               element={

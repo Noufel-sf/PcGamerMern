@@ -25,7 +25,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ChevronDown } from "lucide-react";
 import AdminSidebarLayout from "@/components/AdminSidebarLayout";
-import { useAuth } from "@/context/AuthContext";
 import Api from "@/lib/Api";
 import toast from "react-hot-toast";
 import AdminDataTableSkeleton from "@/components/AdminDataTableSkeleton";
@@ -50,14 +49,14 @@ export default function AdminProducts() {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [open, setOpen] = useState(false);
 
-  const handleStatusChange = async (productId, newStatus) => {
+  const handleStatusChange = async (productId: string, newStatus: string) => {
     try {
-      const res = await Api.patch(`/product/${productId}`, {
+      await Api.patch(`/product/${productId}`, {
         active: newStatus === "active",
       });
       toast.success("Status updated successfully");
       await fetchProducts();
-    } catch (error) {
+    } catch (error: any) {
       toast.error(error.response?.data?.message || "Failed to update status");
     }
   };
@@ -78,12 +77,12 @@ export default function AdminProducts() {
     try {
       const res = await Api.get("/category");
       setCategories(res.data.categories);
-    } catch (err) {
+    } catch {
       toast.error("Failed to fetch categories");
     }
   };
 
-  const handleSubmit = async (e) => {
+  const handleCreateProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
@@ -104,7 +103,7 @@ export default function AdminProducts() {
 
       let res;
       if (editMode && selectedProduct) {
-        res = await Api.patch(`/product/${selectedProduct.id}`, formData);
+        res = await Api.patch(`/product/${(selectedProduct as any).id}`, formData);
       } else {
         res = await Api.post("/product", formData);
       }
@@ -123,20 +122,20 @@ export default function AdminProducts() {
       setCategoryId("");
       setBestSelling(false);
       setSizes([]);
-    } catch (error) {
+    } catch (error: any) {
       toast.error(error.response?.data?.message || "Something went wrong");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDelete = async (productId) => {
+  const handleDelete = async (productId: string) => {
     setLoading(true);
     try {
       const res = await Api.delete(`/product/${productId}`);
       toast.success(res.data.message);
       await fetchProducts();
-    } catch (error) {
+    } catch (error: any) {
       toast.error(error.response?.data?.message);
     } finally {
       setLoading(false);
@@ -148,11 +147,10 @@ export default function AdminProducts() {
     fetchCategories();
   }, []);
 
-  const { user } = useAuth();
-  const [sorting, setSorting] = useState([]);
-  const [columnFilters, setColumnFilters] = useState([]);
-  const [columnVisibility, setColumnVisibility] = useState({});
-  const [rowSelection, setRowSelection] = useState({});
+  const [sorting, setSorting] = useState<any[]>([]);
+  const [columnFilters, setColumnFilters] = useState<any[]>([]);
+  const [columnVisibility, setColumnVisibility] = useState<any>({});
+  const [rowSelection, setRowSelection] = useState<any>({});
 
   const columns = createProductColumns({
     handleStatusChange,
@@ -198,9 +196,10 @@ export default function AdminProducts() {
       <div className="w-full">
         <div className="flex items-center py-4 gap-4">
           <Input
+            type="text"
             placeholder="Search products..."
             value={table.getColumn("name")?.getFilterValue() ?? ""}
-            onChange={(event) =>
+            onChange={(event: any) =>
               table.getColumn("name")?.setFilterValue(event.target.value)
             }
             className="max-w-sm"
@@ -209,7 +208,7 @@ export default function AdminProducts() {
           <CreateProductUi
             open={open}
             setOpen={setOpen}
-            handleSubmit={handleSubmit}
+            handleSubmit={handleCreateProduct}
             editMode={editMode}
             name={name}
             setName={setName}
@@ -224,8 +223,6 @@ export default function AdminProducts() {
             categoryId={categoryId}
             setCategoryId={setCategoryId}
             categories={categories}
-            bestSelling={bestSelling}
-            setBestSelling={setBestSelling}
             sizes={sizes}
             setSizes={setSizes}
             loading={loading}
@@ -237,7 +234,7 @@ export default function AdminProducts() {
                 Columns <ChevronDown className="ml-2 h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" className="">
               {table
                 .getAllColumns()
                 .filter((column) => column.getCanHide())
@@ -246,7 +243,7 @@ export default function AdminProducts() {
                     key={column.id}
                     className="capitalize"
                     checked={column.getIsVisible()}
-                    onCheckedChange={(value) =>
+                    onCheckedChange={(value: any) =>
                       column.toggleVisibility(!!value)
                     }
                   >
@@ -260,7 +257,7 @@ export default function AdminProducts() {
         <UpdateProductUi
           editSheetOpen={editSheetOpen}
           setEditSheetOpen={setEditSheetOpen}
-          handleSubmit={handleSubmit}
+          handleSubmit={handleCreateProduct}
           name={name}
           setName={setName}
           price={price}
@@ -276,20 +273,18 @@ export default function AdminProducts() {
           categoryId={categoryId}
           setCategoryId={setCategoryId}
           categories={categories}
-          bestSelling={bestSelling}
-          setBestSelling={setBestSelling}
           sizes={sizes}
           setSizes={setSizes}
           loading={loading}
         />
 
         <div className="rounded-md border">
-          <Table>
-            <TableHeader>
+          <Table className="">
+            <TableHeader className="">
               {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id}>
+                <TableRow key={headerGroup.id} className="">
                   {headerGroup.headers.map((header) => (
-                    <TableHead key={header.id}>
+                    <TableHead key={header.id} className="">
                       {header.isPlaceholder
                         ? null
                         : flexRender(
@@ -301,7 +296,7 @@ export default function AdminProducts() {
                 </TableRow>
               ))}
             </TableHeader>
-            <TableBody>
+            <TableBody className="">
               {loading ? (
                 <AdminDataTableSkeleton />
               ) : table.getRowModel().rows?.length ? (
@@ -309,9 +304,10 @@ export default function AdminProducts() {
                   <TableRow
                     key={row.id}
                     data-state={row.getIsSelected() && "selected"}
+                    className=""
                   >
                     {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
+                      <TableCell key={cell.id} className="">
                         {flexRender(
                           cell.column.columnDef.cell,
                           cell.getContext(),
@@ -321,7 +317,7 @@ export default function AdminProducts() {
                   </TableRow>
                 ))
               ) : (
-                <TableRow>
+                <TableRow className="">
                   <TableCell
                     colSpan={columns.length}
                     className="h-24 text-center"
@@ -345,6 +341,7 @@ export default function AdminProducts() {
               size="sm"
               onClick={() => table.previousPage()}
               disabled={!table.getCanPreviousPage()}
+              className=""
             >
               Previous
             </Button>
@@ -353,6 +350,7 @@ export default function AdminProducts() {
               size="sm"
               onClick={() => table.nextPage()}
               disabled={!table.getCanNextPage()}
+              className=""
             >
               Next
             </Button>

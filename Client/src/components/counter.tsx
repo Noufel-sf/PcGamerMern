@@ -1,7 +1,3 @@
-'use client';;
-import * as React from 'react';
-import { motion } from 'motion/react';
-
 import { SlidingNumber } from '@/components/animate-ui/text/sliding-number';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -9,14 +5,14 @@ import { cn } from '@/lib/utils';
 function Counter({
   number,
   setNumber,
-  className,
+  className, 
   slidingNumberProps,
   buttonProps,
   transition = { type: 'spring', bounce: 0, stiffness: 300, damping: 30 },
   ...props
 }) {
   return (
-    <motion.div
+    <div
       data-slot="counter"
       layout
       transition={transition}
@@ -25,7 +21,7 @@ function Counter({
         className
       )}
       {...props}>
-      <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+      <div>
         <Button
           size="icon"
           {...buttonProps}
@@ -36,12 +32,12 @@ function Counter({
           )}>
           -
         </Button>
-      </motion.div>
+      </div>
       <SlidingNumber
         number={number}
         {...slidingNumberProps}
         className={cn('text-lg', slidingNumberProps?.className)} />
-      <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+      <div>
         <Button
           size="icon"
           {...buttonProps}
@@ -52,8 +48,8 @@ function Counter({
           )}>
           +
         </Button>
-      </motion.div>
-    </motion.div>
+      </div>
+    </div>
   );
 }
 
